@@ -13,7 +13,7 @@
 
 ```text
 data_mining_analysis_crew/
-├── main.py
+├── demo_data_mining_analysis.py
 ├── crew.py
 ├── agents.py
 ├── tasks.py
@@ -47,7 +47,7 @@ Tools：
 安装依赖：
 
 ```bash
-pip install crewai python-dotenv pandas pydantic
+pip install crewai crewai-tools python-dotenv pandas pydantic
 ```
 
 根据你的模型配置修改 `.env`。
@@ -55,7 +55,7 @@ pip install crewai python-dotenv pandas pydantic
 ## 运行
 
 ```bash
-python main.py
+python demo_data_mining_analysis.py
 ```
 
 成功后会生成：
@@ -78,8 +78,17 @@ outputs/final_report.md
 最终报告生成
 ```
 
+## 自定义代码生成功能DEMO
+直接运行
+```bash
+python demo_generate_tool.py
+```
+详情可见
+[关于自定义生成代码的Skill说明](docs/关于自定义生成代码的Skill说明.md)
+
 ## 注意事项
 
 1. 如果使用 `deepseek/...` 模型前缀，部分 CrewAI 版本需要设置 `DEEPSEEK_API_KEY`。
-2. 如果使用内网 OpenAI-compatible 模型，请设置 `OPENAI_BASE_URL=http://your-host/v1`。
+2. 如果使用内网 OpenAI-compatible 模型，请设置 OPENAI_BASE_URL=http://your-host/v1。
+3. 如果使用内网 OpenAI-compatible 模型，请在OPENAI_MODEL_NAME中不要使用任何模型前缀
 3. 所有分析必须基于工具返回结果，Skill 中已经明确禁止编造统计结论。

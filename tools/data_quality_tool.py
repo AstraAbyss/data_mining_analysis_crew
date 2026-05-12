@@ -12,8 +12,12 @@ from crewai.tools import BaseTool
 
 
 class DataQualityInput(BaseModel):
-    file_path: str = Field(..., description="CSV 文件路径")
-    missing_threshold: float = Field(0.3, description="高缺失率阈值")
+    """
+    数据质量输入参数模型类
+    用于定义数据质量检查所需的输入参数
+    """
+    file_path: str = Field(..., description="CSV 文件路径")  # CSV文件的完整路径，为必填参数
+    missing_threshold: float = Field(0.3, description="高缺失率阈值")  # 定义高缺失率的阈值，默认值为0.3
 
 
 class DataQualityTool(BaseTool):

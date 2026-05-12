@@ -12,9 +12,13 @@ from crewai.tools import BaseTool
 
 
 class CorrelationAnalysisInput(BaseModel):
-    file_path: str = Field(..., description="CSV 文件路径")
-    method: str = Field("pearson", description="相关性方法：pearson、spearman、kendall")
-    threshold: float = Field(0.5, description="强相关阈值，取绝对值比较")
+    """
+    相关性分析输入参数模型类
+    用于定义相关性分析所需的输入参数及其验证规则
+    """
+    file_path: str = Field(..., description="CSV 文件路径")  # 必填参数，指定要分析的CSV文件路径
+    method: str = Field("pearson", description="相关性方法：pearson、spearman、kendall")  # 可选参数，默认使用pearson方法
+    threshold: float = Field(0.5, description="强相关阈值，取绝对值比较")  # 可选参数，默认阈值为0.5，用于判断相关性强度
 
 
 class CorrelationAnalysisTool(BaseTool):

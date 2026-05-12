@@ -12,8 +12,12 @@ from crewai.tools import BaseTool
 
 
 class EDASummaryInput(BaseModel):
-    file_path: str = Field(..., description="CSV 文件路径")
-    max_unique_values: int = Field(10, description="类别字段最多返回多少个频次值")
+    """
+    EDA（探索性数据分析）摘要输入参数模型类
+    用于定义EDA分析所需的输入参数及其约束条件
+    """
+    file_path: str = Field(..., description="CSV 文件路径")  # 必填参数，指定要分析的CSV文件路径
+    max_unique_values: int = Field(10, description="类别字段最多返回多少个频次值")  # 可选参数，默认值为10，限制类别字段返回的频次值数量
 
 
 class EDASummaryTool(BaseTool):

@@ -12,10 +12,14 @@ from crewai.tools import BaseTool
 
 
 class GroupAnalysisInput(BaseModel):
-    file_path: str = Field(..., description="CSV 文件路径")
-    group_by_column: str = Field(..., description="分组字段")
-    target_column: str = Field(..., description="目标统计字段")
-    agg_method: str = Field("mean", description="聚合方法：mean、sum、count、min、max、median")
+    """
+    分组分析输入参数模型类
+    用于定义分组分析所需的输入参数及其约束条件
+    """
+    file_path: str = Field(..., description="CSV 文件路径")  # 必填参数，指定要分析的CSV文件路径
+    group_by_column: str = Field(..., description="分组字段")  # 必填参数，指定用于分组的列名
+    target_column: str = Field(..., description="目标统计字段")  # 必填参数，指定要进行统计分析的目标列
+    agg_method: str = Field("mean", description="聚合方法：mean、sum、count、min、max、median")  # 可选参数，默认使用mean方法，支持多种聚合统计方法
 
 
 class GroupAnalysisTool(BaseTool):

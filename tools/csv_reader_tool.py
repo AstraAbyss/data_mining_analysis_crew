@@ -12,7 +12,13 @@ from crewai.tools import BaseTool
 
 
 class CSVReaderInput(BaseModel):
-    file_path: str = Field(..., description="CSV 文件路径")
+    """
+    CSV文件读取输入参数模型类
+
+    用于定义CSV文件读取所需的输入参数，包括文件路径和预览行数等配置项。
+    继承自BaseModel，提供数据验证和序列化功能。
+    """
+    file_path: str = Field(..., description="CSV 文件路径")  # 必填参数，指定要读取的CSV文件的完整路径
     preview_rows: int = Field(5, description="预览前多少行")
 
 

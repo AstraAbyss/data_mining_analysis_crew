@@ -10,8 +10,13 @@ from crewai.tools import BaseTool
 
 
 class ReportWriterInput(BaseModel):
-    output_path: str = Field(..., description="报告输出路径，例如 outputs/final_report.md")
-    content: str = Field(..., description="Markdown 报告正文内容")
+    """
+    报告写入器输入模型类，用于定义生成报告所需的输入参数
+
+    继承自 BaseModel，提供数据验证和序列化功能
+    """
+    output_path: str = Field(..., description="报告输出路径，例如 outputs/final_report.md")  # 报告保存的文件路径
+    content: str = Field(..., description="Markdown 报告正文内容")  # 报告的主体内容，使用 Markdown 格式
 
 
 class ReportWriterTool(BaseTool):

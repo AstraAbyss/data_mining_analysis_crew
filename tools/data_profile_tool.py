@@ -12,8 +12,15 @@ from crewai.tools import BaseTool
 
 
 class DataProfileInput(BaseModel):
-    file_path: str = Field(..., description="CSV 文件路径")
-    top_n: int = Field(5, description="类别字段返回前多少个高频值")
+    """
+    数据分析配置输入模型类，用于定义数据分析的输入参数
+
+    Attributes:
+        file_path (str): CSV文件的路径，必填参数
+        top_n (int): 类别字段返回的高频值数量，默认为5
+    """
+    file_path: str = Field(..., description="CSV 文件路径")  # 必填的CSV文件路径参数
+    top_n: int = Field(5, description="类别字段返回前多少个高频值")  # 可选参数，默认值为5，指定返回的高频值数量
 
 
 class DataProfileTool(BaseTool):
