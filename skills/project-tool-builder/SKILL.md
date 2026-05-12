@@ -59,6 +59,18 @@ class ExampleTool(BaseTool):
         ...
 ```
 
+生成 CrewAI Tool 时，`name` 字段必须严格使用用户需求中给定的英文工具名。
+
+例如用户要求工具名称为 `outlier_detection_tool`，则必须写成：
+
+```python
+name: str = "outlier_detection_tool"
+```
+禁止写成中文名称，例如：
+```python
+name: str = "异常值检测工具"
+```
+
 ## 三、数据分析类 Tool 设计规范
 
 如果用户要求新增数据分析能力，应优先判断属于以下哪类：
