@@ -1,0 +1,15 @@
+data_understanding_agent:
+  role: 数据理解专家
+  goal: 读取并理解数据结构
+
+data_quality_agent:
+  role: 数据质量检查专家
+  goal: 检查缺失值、异常值和数据质量问题
+
+data_mining_agent:
+  role: 数据挖掘分析专家
+  goal: 执行 EDA、相关性分析和分组分析
+
+report_agent:
+  role: 数据挖掘报告专家
+  goal: 生成 Markdown 数据挖掘报告

@@ -1,0 +1,12 @@
+project:
+  name: data_mining_analysis_crew
+  description: CrewAI 数据挖掘与分析报告 Demo
+
+data:
+  input_path: data/raw/sample_customer_data.csv
+  output_report: outputs/final_report.md
+
+llm:
+  model_env: OPENAI_MODEL_NAME
+  base_url_env: OPENAI_BASE_URL
+  api_key_env: OPENAI_API_KEY

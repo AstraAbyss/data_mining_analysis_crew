@@ -1,0 +1,11 @@
+customer_id,age,gender,region,monthly_spend,login_count,days_since_last_login,complaint_count,membership_level,churn
+1001,23.0,F,East,120.5,18,2,0,Silver,0
+1002,35.0,M,West,320.0,6,14,1,Gold,0
+1003,45.0,M,East,210.0,9,9,0,Silver,0
+1004,29.0,F,North,95.0,25,1,0,Bronze,0
+1005,52.0,F,South,450.0,3,32,3,Platinum,1
+1006,41.0,M,East,380.5,4,25,2,Gold,1
+1007,37.0,F,West,180.0,12,7,1,Silver,0
+1008,60.0,M,South,520.0,2,40,4,Platinum,1
+1009,31.0,F,North,130.0,20,3,0,Bronze,0
+1010,,M,East,75.0,1,60,5,Bronze,1

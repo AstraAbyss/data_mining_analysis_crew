@@ -1,0 +1,6 @@
+tasks:
+  - data_understanding
+  - data_quality
+  - eda_summary
+  - relation_analysis
+  - final_report
