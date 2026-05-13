@@ -5,6 +5,9 @@
 
 from crewai import Agent
 from utils.llm import get_llm
+# 加载crewai自带的工具
+from crewai_tools import FileReadTool, DirectoryReadTool
+# 加载自定义工具
 from tools import (
     CSVReaderTool,
     DataProfileTool,

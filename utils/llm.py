@@ -8,15 +8,31 @@ from dotenv import load_dotenv
 from crewai import LLM
 
 
-def get_llm() -> LLM:
+def get_llm(
+        model_name: str = os.getenv("OPENAI_MODEL_NAME", "deepseek/deepseek-v4-flash")
+) -> LLM:
     load_dotenv()
 
     return LLM(
-        model=os.getenv("OPENAI_MODEL_NAME", "deepseek/deepseek-v4-flash"),
+        model=model_name,
         api_key=os.getenv("DEEPSEEK_API_KEY") or os.getenv("OPENAI_API_KEY"),
         base_url=os.getenv("OPENAI_BASE_URL") or os.getenv("OPENAI_API_BASE"),
         temperature=float(os.getenv("LLM_TEMPERATURE", "0.2")),
     )
+
+
+def get_volcengine_llm(
+    model_name: str = os.getenv("VOLCENGINE_MODEL_NAME")
+) -> LLM:
+    load_dotenv()
+
+    return LLM(
+        model=model_name,
+        api_key=os.getenv("VOLCENGINE_API_KEY"),
+        base_url=os.getenv("VOLCENGINE_API_BASE"),
+        temperature=float(os.getenv("LLM_TEMPERATURE", "0.2")),
+    )
+
 
 
 # 测试
@@ -31,5 +47,14 @@ if __name__ == "__main__":
 
     prompt = "你好，生成一个hello world的python代码"
     print(prompt)
+    response = llm.call(prompt)
+    print(response)
+
+    print("="*60)
+    print("VOLCENGINE_API_KEY exists =", bool(os.getenv("VOLCENGINE_API_KEY")))
+    print("VOLCENGINE_API_BASE =", os.getenv("VOLCENGINE_API_BASE"))
+    print("VOLCENGINE_MODEL_NAME =", os.getenv("VOLCENGINE_MODEL_NAME"))
+
+    llm = get_volcengine_llm()
     response = llm.call(prompt)
     print(response)

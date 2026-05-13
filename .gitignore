@@ -1,6 +1,5 @@
 # IDE
 .idea/
-.gitignore
 
 # Python
 __pycache__/
