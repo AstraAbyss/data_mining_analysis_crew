@@ -49,6 +49,11 @@ Tools：
 ```bash
 pip install crewai crewai-tools python-dotenv pandas pydantic
 ```
+复制环境变量文件：
+
+```bash
+cp config/.env.example .env
+```
 
 根据你的模型配置修改 `.env`。
 
