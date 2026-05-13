@@ -9,7 +9,11 @@ from crew import create_data_mining_crew
 
 
 def main() -> None:
-    ensure_dirs()
+    """
+    主函数，执行数据挖掘分析流程
+    包括创建必要目录、生成示例数据、创建数据挖掘团队并执行分析任务
+    """
+    ensure_dirs()  # 确保所需的输出目录存在
     file_path = create_sample_customer_data("data/raw/sample_customer_data.csv")
     crew = create_data_mining_crew(file_path)
     result = crew.kickoff()

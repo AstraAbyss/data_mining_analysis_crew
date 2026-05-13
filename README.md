@@ -79,8 +79,11 @@ outputs/final_report.md
 ```
 
 ## 自定义代码生成功能DEMO
-直接运行
+直接运行，将环境设置为utf-8(防止官方文件读取到gbk报错)
 ```bash
+set PYTHONUTF8=1
+set PYTHONIOENCODING=utf-8
+chcp 65001
 python demo_generate_tool.py
 ```
 详情可见

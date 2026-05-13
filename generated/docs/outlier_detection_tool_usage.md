@@ -1,326 +1,289 @@
-# Òì³£Öµ¼ì²â¹¤¾ß (OutlierDetectionTool) Ê¹ÓÃÖ¸ÄÏ
+# å¼‚å¸¸å€¼æ£€æµ‹å·¥å…· (Outlier Detection Tool) ä½¿ç”¨è¯´æ˜
 
-## Ò»¡¢¹¤¾ß¼ò½é
+## å·¥å…·æ¦‚è¿°
 
-`OutlierDetectionTool` ÊÇÒ»¸ö»ùÓÚ CrewAI ¿ò¼ÜµÄÒì³£Öµ¼ì²â¹¤¾ß£¬ÓÃÓÚ´Ó CSV ÎÄ¼şÖĞ¶ÁÈ¡Êı¾İ²¢¶ÔÖ¸¶¨×Ö¶Î£¨»òËùÓĞÊıÖµ×Ö¶Î£©½øĞĞÒì³£Öµ¼ì²â·ÖÎö¡£
+`outlier_detection_tool` æ˜¯ä¸€ä¸ªç”¨äºæ£€æµ‹ CSV æ–‡ä»¶ä¸­æ•°å€¼å­—æ®µå¼‚å¸¸å€¼çš„ CrewAI å·¥å…·ã€‚æ”¯æŒ IQRï¼ˆå››åˆ†ä½è·æ³•ï¼‰å’Œ Z-Scoreï¼ˆZ åˆ†æ•°æ³•ï¼‰ä¸¤ç§æ£€æµ‹æ–¹æ³•ã€‚
 
-### Ö§³ÖµÄ·½·¨
+## å·¥å…·ä¿¡æ¯
 
-| ·½·¨ | ËµÃ÷ | ÊÊÓÃ³¡¾° | ³£ÓÃãĞÖµ |
-|------|------|----------|----------|
-| `iqr` | ËÄ·ÖÎ»¾à·¨ (Interquartile Range) | Êı¾İ·Ö²¼Æ«Ì¬½ÏÇ¿£¬º¬¼«¶ËÖµÊ± | 1.5£¨ÖĞ¶ÈÒì³££©/ 3£¨¼«¶ÈÒì³££© |
-| `zscore` | Z-Score ±ê×¼·ÖÊı·¨ | Êı¾İ½üËÆÕıÌ¬·Ö²¼Ê± | 2£¨¿íËÉ£©/ 3£¨ÑÏ¸ñ£© |
+| å±æ€§ | è¯´æ˜ |
+|------|------|
+| **å·¥å…·åç§°** | `outlier_detection_tool` |
+| **ç±»å** | `OutlierDetectionTool` |
+| **æ–‡ä»¶è·¯å¾„** | `generated/tools/outlier_detection_tool.py` |
+| **è¾“å…¥æ¨¡å‹** | `OutlierDetectionInput` |
 
----
+## è¾“å…¥å‚æ•°
 
-## ¶ş¡¢°²×°ÒÀÀµ
+| å‚æ•°å | ç±»å‹ | å¿…å¡« | é»˜è®¤å€¼ | è¯´æ˜ |
+|--------|------|------|--------|------|
+| `file_path` | `str` | æ˜¯ | - | CSV æ–‡ä»¶è·¯å¾„ |
+| `columns` | `Optional[List[str]]` | å¦ | `None` | éœ€è¦æ£€æµ‹çš„å­—æ®µåˆ—è¡¨ã€‚ä¸ºç©ºæ—¶è‡ªåŠ¨é€‰æ‹©æ‰€æœ‰æ•°å€¼å­—æ®µ |
+| `method` | `str` | å¦ | `"iqr"` | æ£€æµ‹æ–¹æ³•ï¼š`"iqr"` æˆ– `"zscore"` |
+| `threshold` | `float` | å¦ | `1.5` | å¼‚å¸¸å€¼åˆ¤å®šé˜ˆå€¼ |
 
-È·±£ÒÑ°²×°ËùĞèÒÀÀµ£º
+## æ£€æµ‹æ–¹æ³•è¯´æ˜
 
-```bash
-pip install pandas numpy scipy crewai
+### 1. IQR æ–¹æ³•ï¼ˆå››åˆ†ä½è·æ³•ï¼‰
+
+- è®¡ç®—ç¬¬ä¸€å››åˆ†ä½æ•°ï¼ˆQ1ï¼‰å’Œç¬¬ä¸‰å››åˆ†ä½æ•°ï¼ˆQ3ï¼‰
+- IQR = Q3 - Q1
+- ä¸‹ç•Œ = Q1 - threshold Ã— IQR
+- ä¸Šç•Œ = Q3 + threshold Ã— IQR
+- è¶…å‡ºä¸Šä¸‹ç•Œçš„å€¼å³ä¸ºå¼‚å¸¸å€¼
+- **å»ºè®®é˜ˆå€¼**ï¼š1.5ï¼ˆä¸­åº¦å¼‚å¸¸ï¼‰ã€3.0ï¼ˆæåº¦å¼‚å¸¸ï¼‰
+
+### 2. Z-Score æ–¹æ³•ï¼ˆZ åˆ†æ•°æ³•ï¼‰
+
+- è®¡ç®—å‡å€¼ï¼ˆmeanï¼‰å’Œæ ‡å‡†å·®ï¼ˆstdï¼‰
+- Z = (x - mean) / std
+- |Z| > threshold çš„å€¼å³ä¸ºå¼‚å¸¸å€¼
+- **å»ºè®®é˜ˆå€¼**ï¼š2.0ï¼ˆè¾ƒæ•æ„Ÿï¼‰ã€3.0ï¼ˆæ ‡å‡†å¸¸ç”¨å€¼ï¼‰
+
+## è¾“å‡ºç»“æœæ ¼å¼
+
+å·¥å…·è¿”å› JSON å­—ç¬¦ä¸²ï¼ŒåŒ…å«ä»¥ä¸‹ä¿¡æ¯ï¼š
+
+```json
+{
+  "file": "data/raw/sample.csv",
+  "method": "iqr",
+  "threshold": 1.5,
+  "total_rows": 1000,
+  "columns_analyzed": 5,
+  "fields": {
+    "age": {
+      "mean": 38.5,
+      "std": 12.3,
+      "min": 18.0,
+      "max": 95.0,
+      "median": 37.0,
+      "total_values": 998,
+      "Q1": 28.0,
+      "Q3": 48.0,
+      "IQR": 20.0,
+      "lower_bound": -2.0,
+      "upper_bound": 78.0,
+      "outlier_count": 12,
+      "outlier_ratio": 0.012,
+      "method_description": "ä½¿ç”¨ IQR æ–¹æ³•...",
+      "outlier_values_preview": [85.0, 90.0, 95.0],
+      "outlier_indices_preview": [10, 25, 100]
+    }
+  },
+  "summary": {
+    "total_outliers": 45,
+    "total_values_checked": 4500,
+    "overall_outlier_ratio": 0.01
+  }
+}
 ```
 
----
+## ä½¿ç”¨ç¤ºä¾‹
 
-## Èı¡¢Tool ´úÂëÎÄ¼ş
-
-**ÎÄ¼şÎ»ÖÃ£º** `generated/tools/outlier_detection_tool.py`
-
----
-
-## ËÄ¡¢¶ÀÁ¢Ê¹ÓÃÊ¾Àı
+### 1. ç›´æ¥è°ƒç”¨å·¥å…·
 
 ```python
 from generated.tools.outlier_detection_tool import OutlierDetectionTool
 
-# ³õÊ¼»¯¹¤¾ß
 tool = OutlierDetectionTool()
 
-# Ê¾Àı 1£ºÊ¹ÓÃ IQR ·½·¨¼ì²âËùÓĞÊıÖµ×Ö¶Î
-result = tool.run(
-    file_path="./data/dataset.csv",
+# ç¤ºä¾‹1: ä½¿ç”¨ IQR æ–¹æ³•æ£€æµ‹æ‰€æœ‰æ•°å€¼å­—æ®µ
+result = tool._run(
+    file_path="data/raw/sample_customer_data.csv",
     method="iqr",
     threshold=1.5
 )
 print(result)
 
-# Ê¾Àı 2£ºÊ¹ÓÃ Z-Score ·½·¨¼ì²âÖ¸¶¨×Ö¶Î
-result = tool.run(
-    file_path="./data/dataset.csv",
-    columns=["age", "salary", "score"],
+# ç¤ºä¾‹2: æŒ‡å®šå­—æ®µï¼Œä½¿ç”¨ Z-Score æ–¹æ³•
+result = tool._run(
+    file_path="data/raw/sample_customer_data.csv",
+    columns=["age", "income", "spending_score"],
     method="zscore",
     threshold=3.0
 )
 print(result)
 
-# Ê¾Àı 3£º½ö¼ì²âµ¥¸ö×Ö¶Î
-result = tool.run(
-    file_path="./data/dataset.csv",
-    columns=["price"],
-    method="iqr",
-    threshold=3.0
+# ç¤ºä¾‹3: åªæ£€æµ‹ç‰¹å®šå­—æ®µï¼Œä½¿ç”¨é»˜è®¤ IQR æ–¹æ³•
+result = tool._run(
+    file_path="data/raw/sample_customer_data.csv",
+    columns=["age"]
 )
 print(result)
 ```
 
----
-
-## Îå¡¢Agent ¹ÒÔØÊ¾Àı
-
-½«¹¤¾ß¹ÒÔØµ½ Agent ÉÏ£¬Ê¹ Agent ¾ß±¸Òì³£Öµ¼ì²âÄÜÁ¦£º
+### 2. åœ¨ Agent ä¸­æŒ‚è½½
 
 ```python
 from crewai import Agent
 from generated.tools.outlier_detection_tool import OutlierDetectionTool
 
-def create_data_quality_agent(llm):
-    """´´½¨Êı¾İÖÊÁ¿·ÖÎö Agent"""
-    return Agent(
-        role="Êı¾İÖÊÁ¿·ÖÎöÊ¦",
-        goal="¶ÔÊı¾İ¼¯½øĞĞÈ«ÃæµÄÖÊÁ¿¼ì²â£¬°üÀ¨Òì³£ÖµÊ¶±ğ¡¢È±Ê§Öµ·ÖÎöºÍÊı¾İ·Ö²¼ÆÀ¹À",
-        backstory=(
-            "ÄãÊÇÒ»Ãû×ÊÉîµÄÊı¾İÖÊÁ¿·ÖÎöÊ¦£¬ÉÃ³¤´ÓÊı¾İÖĞ·¢ÏÖÒì³£Ä£Ê½¡£"
-            "Äã¾«Í¨Í³¼ÆÑ§·½·¨£¬ÄÜ¹»×¼È·Ê¶±ğÊı¾İ¼¯ÖĞµÄÒì³£Öµ£¬"
-            "²¢ÎªºóĞøµÄÊı¾İÇåÏ´ºÍÔ¤´¦ÀíÌá¹©×¨Òµ½¨Òé¡£"
-        ),
-        llm=llm,
-        tools=[OutlierDetectionTool()],
-        skills=["./skills/data-mining-analysis"],
-        verbose=True,
-        allow_delegation=False,
-    )
-```
+# å®ä¾‹åŒ–å·¥å…·
+outlier_tool = OutlierDetectionTool()
 
----
-
-## Áù¡¢Task ¹ÒÔØÊ¾Àı
-
-ÔÚ Task ÖĞÊ¹ÓÃ¹¤¾ß½øĞĞÒì³£Öµ¼ì²â£º
-
-### Ê¾Àı 1£º»ù´¡Òì³£Öµ¼ì²âÈÎÎñ
-
-```python
-from crewai import Task
-from generated.tools.outlier_detection_tool import OutlierDetectionTool
-
-outlier_detection_task = Task(
-    description=(
-        "¶ÔÊı¾İ¼¯ {file_path} ½øĞĞÒì³£Öµ¼ì²â¡£\n"
-        "1. Ê¹ÓÃ IQR ·½·¨£¬ãĞÖµÎª 1.5£¬¼ì²âËùÓĞÊıÖµ×Ö¶ÎµÄÒì³£Öµ¡£\n"
-        "2. ¶ÔÓÚÒì³£Öµ±ÈÀı³¬¹ı 5% µÄ×Ö¶Î£¬Ê¹ÓÃ Z-Score ·½·¨£¨ãĞÖµ=3£©½øĞĞ½»²æÑéÖ¤¡£\n"
-        "3. Êä³öÃ¿¸ö×Ö¶ÎµÄÒì³£ÖµÊıÁ¿¡¢±ÈÀı¡¢ÉÏÏÂ½çÒÔ¼°Òì³£ÖµµÄ¾ßÌåÈ¡Öµ¡£\n"
-        "4. ¸ù¾İ¼ì²â½á¹û¸ø³öÊı¾İÇåÏ´½¨Òé¡£"
+# åˆ›å»ºæ•°æ®è´¨é‡åˆ†æ Agent
+data_quality_agent = Agent(
+    role="æ•°æ®è´¨é‡åˆ†æå¸ˆ",
+    goal="å¯¹æ•°æ®é›†è¿›è¡Œå…¨é¢è´¨é‡æ£€æŸ¥å’Œå¼‚å¸¸å€¼åˆ†æï¼Œç¡®ä¿æ•°æ®è´¨é‡",
+    backstory=(
+        "ä½ æ˜¯ä¸€åç»éªŒä¸°å¯Œçš„æ•°æ®è´¨é‡åˆ†æå¸ˆï¼Œæ“…é•¿æ£€æµ‹æ•°æ®ä¸­çš„å¼‚å¸¸å€¼ã€ç¼ºå¤±å€¼ç­‰é—®é¢˜ã€‚"
+        "ä½ èƒ½å¤Ÿä½¿ç”¨å¤šç§ç»Ÿè®¡æ–¹æ³•è¯†åˆ«å¼‚å¸¸æ•°æ®ï¼Œä¸ºåç»­åˆ†ææä¾›é«˜è´¨é‡çš„æ•°æ®åŸºç¡€ã€‚"
     ),
-    expected_output=(
-        "Ò»¸ö½á¹¹»¯µÄ JSON ±¨¸æ£¬°üº¬£º\n"
-        "- Ã¿¸ö×Ö¶ÎµÄÒì³£Öµ¼ì²â½á¹û£¨ÊıÁ¿¡¢±ÈÀı¡¢ÉÏÏÂ½ç£©\n"
-        "- Òì³£Öµ¾ßÌåÈ¡ÖµÔ¤ÀÀ£¨×î¶àÇ° 10 ¸ö£©\n"
-        "- »ùÓÚÒì³£Öµ·ÖÎöµÄÊı¾İÇåÏ´½¨Òé"
-    ),
-    tools=[OutlierDetectionTool()],
-    agent=data_quality_agent,  # ¶ÔÓ¦ÉÏÃæ´´½¨µÄ Agent
+    llm=llm,
+    tools=[outlier_tool],
+    skills=["./skills/data-mining-analysis"],
+    verbose=True,
+    allow_delegation=False,
 )
 ```
 
-### Ê¾Àı 2£º¸ß¼¶Òì³£Öµ·ÖÎöÈÎÎñ
+### 3. åœ¨ Task ä¸­æŒ‚è½½
 
 ```python
-advanced_outlier_task = Task(
+from crewai import Task
+
+outlier_detection_task = Task(
     description=(
-        "¶ÔÊı¾İ¼¯ {file_path} ½øĞĞÉî¶ÈÒì³£Öµ·ÖÎö£º\n"
-        "1. Ê¹ÓÃ IQR ·½·¨£¨threshold=1.5£©¼ì²âËùÓĞÊıÖµ×Ö¶ÎµÄÒì³£Öµ¡£\n"
-        "2. Õë¶Ô×Ö¶Î {columns}£¬Ê¹ÓÃ Z-Score ·½·¨£¨threshold=3£©½øĞĞ¾«È·¼ì²â¡£\n"
-        "3. ¶Ô±ÈÁ½ÖÖ·½·¨µÄ¼ì²â½á¹û²îÒì¡£\n"
-        "4. Í³¼ÆÃ¿¸ö×Ö¶ÎÒì³£ÖµµÄÕ¼±È£¬ÅĞ¶ÏÊı¾İÖÊÁ¿µÈ¼¶¡£\n"
-        "5. ¸ø³öÊÇ·ñÉ¾³ıÒì³£Öµ¡¢Ìæ»»»ò±£ÁôµÄ½¨Òé¡£"
+        "è¯·è°ƒç”¨ outlier_detection_tool åˆ†æ data/raw/sample_customer_data.csv ä¸­çš„å¼‚å¸¸å€¼ã€‚\n\n"
+        "åˆ†æè¦æ±‚ï¼š\n"
+        "1. ä½¿ç”¨ iqr æ–¹æ³•ï¼Œé˜ˆå€¼è®¾ä¸º 1.5ï¼Œæ£€æµ‹æ‰€æœ‰æ•°å€¼å­—æ®µçš„å¼‚å¸¸å€¼\n"
+        "2. é‡ç‚¹åˆ†æ ageã€incomeã€spending_score ç­‰å…³é”®å­—æ®µ\n"
+        "3. æ ¹æ®å·¥å…·è¿”å›çš„çœŸå®ç»“æœç”Ÿæˆå¼‚å¸¸å€¼åˆ†ææŠ¥å‘Š\n"
+        "4. å¯¹å‘ç°çš„å¼‚å¸¸å€¼ç»™å‡ºå¤„ç†å»ºè®®ï¼ˆä¿ç•™ã€ä¿®æ­£æˆ–åˆ é™¤ï¼‰\n\n"
+        "å¿…é¡»åŸºäºå·¥å…·çœŸå®è¿”å›ç»“æœç”Ÿæˆç»“è®ºï¼Œç¦æ­¢ç¼–é€ æ•°æ®ã€‚"
     ),
     expected_output=(
-        "°üº¬ IQR ºÍ Z-Score Á½ÖÖ·½·¨¶Ô±ÈµÄÒì³£Öµ¼ì²â±¨¸æ£¬"
-        "ÒÔ¼°Êı¾İÖÊÁ¿ÆÀ¹ÀºÍ´¦Àí½¨Òé¡£"
+        "ä¸€ä»½å®Œæ•´çš„å¼‚å¸¸å€¼åˆ†ææŠ¥å‘Šï¼ŒåŒ…å«ï¼š\n"
+        "- æ£€æµ‹æ–¹æ³•è¯´æ˜\n"
+        "- å„å­—æ®µå¼‚å¸¸å€¼ç»Ÿè®¡ï¼ˆæ•°é‡ã€æ¯”ä¾‹ã€ä¸Šä¸‹ç•Œï¼‰\n"
+        "- å¼‚å¸¸å€¼åˆ†å¸ƒåˆ†æ\n"
+        "- å¼‚å¸¸å€¼å¤„ç†å»ºè®®\n"
+        "- æ•´ä½“æ•°æ®è´¨é‡è¯„ä¼°"
     ),
-    tools=[OutlierDetectionTool()],
     agent=data_quality_agent,
 )
 ```
 
----
+## Crew é›†æˆè¯´æ˜
 
-## Æß¡¢Crew ¼¯³ÉËµÃ÷
-
-½« Agent¡¢Task ºÍ Tool ¼¯³Éµ½ Crew ÖĞ£º
-
-### ÍêÕû¼¯³ÉÊ¾Àı
+### æ–¹æ¡ˆä¸€ï¼šåœ¨ç°æœ‰ Crew ä¸­æ–°å¢ Agent å’Œ Task
 
 ```python
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
-
-"""Òì³£Öµ¼ì²â Crew ¼¯³ÉÊ¾Àı"""
-
-import os
-from crewai import Agent, Crew, Task, Process
-from crewai.llm import LLM
-
+from crewai import Crew, Process, Agent, Task
 from generated.tools.outlier_detection_tool import OutlierDetectionTool
 
+# 1. å®ä¾‹åŒ–å·¥å…·
+outlier_tool = OutlierDetectionTool()
 
-def create_crew(file_path: str, columns: list = None):
-    """
-    ´´½¨²¢ÔËĞĞÒì³£Öµ¼ì²â Crew¡£
+# 2. åˆ›å»º Agent
+data_quality_agent = Agent(
+    role="æ•°æ®è´¨é‡åˆ†æå¸ˆ",
+    goal="å¯¹æ•°æ®é›†è¿›è¡Œå…¨é¢è´¨é‡æ£€æŸ¥å’Œå¼‚å¸¸å€¼åˆ†æï¼Œç¡®ä¿æ•°æ®è´¨é‡",
+    backstory="ä½ æ˜¯ä¸€åç»éªŒä¸°å¯Œçš„æ•°æ®è´¨é‡åˆ†æå¸ˆ...",
+    llm=llm,
+    tools=[outlier_tool],
+    skills=["./skills/data-mining-analysis"],
+    verbose=True,
+    allow_delegation=False,
+)
 
-    Args:
-        file_path: CSV Êı¾İ¼¯Â·¾¶
-        columns: ´ı¼ì²â×Ö¶ÎÁĞ±í£¨¿ÉÑ¡£©
-    """
-    # 1. ³õÊ¼»¯ LLM
-    llm = LLM(
-        model=os.getenv("LLM_MODEL", "gpt-4"),
-        api_key=os.getenv("LLM_API_KEY"),
-        temperature=0.1,
-    )
+# 3. åˆ›å»º Task
+outlier_detection_task = Task(
+    description=(
+        "è¯·è°ƒç”¨ outlier_detection_tool åˆ†æ data/raw/sample_customer_data.csv ä¸­çš„å¼‚å¸¸å€¼ã€‚\n"
+        "ä½¿ç”¨ iqr æ–¹æ³•ï¼Œé˜ˆå€¼ 1.5ã€‚å¿…é¡»åŸºäºå·¥å…·çœŸå®è¿”å›ç»“æœã€‚"
+    ),
+    expected_output="å¼‚å¸¸å€¼åˆ†ææŠ¥å‘Šï¼ŒåŒ…å«å„å­—æ®µå¼‚å¸¸å€¼ç»Ÿè®¡å’Œå¤„ç†å»ºè®®ã€‚",
+    agent=data_quality_agent,
+)
 
-    # 2. ´´½¨¹¤¾ßÊµÀı
-    outlier_tool = OutlierDetectionTool()
-
-    # 3. ´´½¨ Agent
-    data_quality_agent = Agent(
-        role="Êı¾İÖÊÁ¿·ÖÎöÊ¦",
-        goal="¶ÔÊı¾İ¼¯½øĞĞÈ«ÃæµÄÒì³£Öµ¼ì²â·ÖÎö£¬È·±£Êı¾İÖÊÁ¿",
-        backstory=(
-            "ÄãÊÇÒ»Ãû¾­Ñé·á¸»µÄÊı¾İÖÊÁ¿·ÖÎöÊ¦£¬¾«Í¨Í³¼ÆÑ§ºÍÊı¾İ·ÖÎö¡£"
-            "ÄãÉÃ³¤Ê¹ÓÃ IQR ºÍ Z-Score µÈ·½·¨¾«×¼Ê¶±ğÒì³£Öµ£¬"
-            "²¢ÄÜÎªÊı¾İÇåÏ´Ìá¹©×¨Òµ½¨Òé¡£"
-        ),
-        llm=llm,
-        tools=[outlier_tool],
-        skills=["./skills/data-mining-analysis"],
-        verbose=True,
-        allow_delegation=False,
-    )
-
-    # 4. ´´½¨ Task
-    outlier_detection_task = Task(
-        description=(
-            f"¶ÔÊı¾İ¼¯ {file_path} ½øĞĞÈ«ÃæµÄÒì³£Öµ¼ì²â£º\n"
-            f"1. Ê¹ÓÃ IQR ·½·¨£¨threshold=1.5£©¼ì²âËùÓĞÊıÖµ×Ö¶Î¡£\n"
-            f"{'2. ÖØµã¹Ø×¢×Ö¶Î: ' + str(columns) if columns else '2. ×Ô¶¯¼ì²âËùÓĞÊıÖµ×Ö¶Î¡£'}\n"
-            f"3. Êä³öÃ¿¸ö×Ö¶ÎµÄÒì³£ÖµÊıÁ¿¡¢±ÈÀı¡¢ÉÏÏÂ½çĞÅÏ¢¡£\n"
-            f"4. ¶ÔÒì³£Öµ±ÈÀı³¬¹ı 5% µÄ×Ö¶Î½øĞĞÖØµã·ÖÎö¡£\n"
-            f"5. ¸ø³öÊı¾İÇåÏ´ºÍ´¦ÀíµÄ½¨Òé¡£"
-        ),
-        expected_output=(
-            "Ò»¸öÍêÕûµÄÒì³£Öµ¼ì²â±¨¸æ£¬°üº¬£º\n"
-            "- Êı¾İ¼¯»ù±¾ĞÅÏ¢£¨×Ü¼ÇÂ¼Êı¡¢×Ö¶ÎÊı£©\n"
-            "- Ã¿¸öÊıÖµ×Ö¶ÎµÄÒì³£Öµ¼ì²â½á¹û\n"
-            "- Òì³£ÖµÈ¡ÖµÔ¤ÀÀ\n"
-            "- Êı¾İÖÊÁ¿ÆÀ¹À½áÂÛºÍÇåÏ´½¨Òé"
-        ),
-        tools=[outlier_tool],
-        agent=data_quality_agent,
-    )
-
-    # 5. ´´½¨ Crew
-    crew = Crew(
-        agents=[data_quality_agent],
-        tasks=[outlier_detection_task],
-        process=Process.sequential,
-        verbose=True,
-    )
-
-    return crew
-
-
-# ===== ÔËĞĞÈë¿Ú =====
-if __name__ == "__main__":
-    crew = create_crew(
-        file_path="./data/sample_dataset.csv",
-        columns=["age", "salary", "experience_years"],
-    )
-    result = crew.kickoff()
-    print("=" * 60)
-    print("Òì³£Öµ¼ì²âÍê³É£¡")
-    print("=" * 60)
-    print(result)
+# 4. é›†æˆåˆ° Crewï¼ˆæ·»åŠ åˆ°ç°æœ‰ä»»åŠ¡åˆ—è¡¨ä¸­ï¼‰
+crew = Crew(
+    agents=[existing_agent_1, existing_agent_2, data_quality_agent],
+    tasks=[existing_task_1, existing_task_2, outlier_detection_task],
+    process=Process.sequential,
+    verbose=True,
+)
 ```
 
----
+### æ–¹æ¡ˆäºŒï¼šåˆ›å»ºç‹¬ç«‹çš„å¼‚å¸¸å€¼åˆ†æ Crew
 
-## °Ë¡¢·µ»Ø½á¹û¸ñÊ½ËµÃ÷
+```python
+from crewai import Crew, Process, Agent, Task
+from generated.tools.outlier_detection_tool import OutlierDetectionTool
 
-¹¤¾ß·µ»ØµÄ JSON ½á¹û½á¹¹ÈçÏÂ£º
+outlier_tool = OutlierDetectionTool()
 
-```json
-{
-  "status": "success",
-  "method": "iqr",
-  "threshold": 1.5,
-  "total_records": 1000,
-  "detected_fields": ["age", "salary", "score"],
-  "results": {
-    "age": {
-      "field": "age",
-      "method": "iqr",
-      "threshold": 1.5,
-      "total_count": 1000,
-      "outlier_count": 12,
-      "outlier_ratio": 0.012,
-      "outlier_ratio_percent": "1.20%",
-      "q1": 25.0,
-      "q3": 45.0,
-      "iqr": 20.0,
-      "lower_bound": -5.0,
-      "upper_bound": 75.0,
-      "outlier_values": [82, 85, 90, 2, 3, ...],
-      "outlier_preview_count": 10
-    },
-    "salary": {
-      "field": "salary",
-      "method": "iqr",
-      "threshold": 1.5,
-      "total_count": 998,
-      "outlier_count": 5,
-      "outlier_ratio": 0.005,
-      "outlier_ratio_percent": "0.50%",
-      "q1": 35000.0,
-      "q3": 85000.0,
-      "iqr": 50000.0,
-      "lower_bound": -40000.0,
-      "upper_bound": 160000.0,
-      "outlier_values": [250000, 300000, ...],
-      "outlier_preview_count": 3
-    }
-  }
-}
+data_quality_agent = Agent(
+    role="æ•°æ®è´¨é‡åˆ†æå¸ˆ",
+    goal="æ£€æµ‹å¹¶åˆ†ææ•°æ®é›†ä¸­çš„å¼‚å¸¸å€¼",
+    backstory="ä½ æ˜¯ä¸€åæ•°æ®è´¨é‡ä¸“å®¶...",
+    llm=llm,
+    tools=[outlier_tool],
+    skills=["./skills/data-mining-analysis"],
+    verbose=True,
+    allow_delegation=False,
+)
+
+task = Task(
+    description="è¯·è°ƒç”¨ outlier_detection_tool åˆ†æ data/raw/sample_customer_data.csv...",
+    expected_output="å¼‚å¸¸å€¼åˆ†ææŠ¥å‘Š",
+    agent=data_quality_agent,
+)
+
+crew = Crew(
+    agents=[data_quality_agent],
+    tasks=[task],
+    process=Process.sequential,
+    verbose=True,
+)
+
+# è¿è¡Œ
+result = crew.kickoff()
+print(result)
 ```
 
-### ½á¹û×Ö¶ÎËµÃ÷
+## è¿è¡Œè¯´æ˜
 
-| ×Ö¶Î | ÀàĞÍ | ËµÃ÷ |
-|------|------|------|
-| `status` | string | Ö´ĞĞ×´Ì¬: `success` / `warning` / `error` |
-| `method` | string | Ê¹ÓÃµÄ¼ì²â·½·¨ |
-| `threshold` | float | Éè¶¨µÄãĞÖµ |
-| `total_records` | int | CSV ÎÄ¼ş×Ü¼ÇÂ¼Êı |
-| `detected_fields` | list | Êµ¼Ê¼ì²âµÄ×Ö¶ÎÁĞ±í |
-| `results` | object | Ã¿¸ö×Ö¶ÎµÄ¼ì²â½á¹û |
-| `field` | string | ×Ö¶ÎÃû³Æ |
-| `outlier_count` | int | Òì³£ÖµÊıÁ¿ |
-| `outlier_ratio` | float | Òì³£Öµ±ÈÀı£¨Ğ¡Êı£© |
-| `outlier_ratio_percent` | string | Òì³£Öµ±ÈÀı£¨°Ù·Ö±È£© |
-| `lower_bound` | float | ÏÂ½ç£¨µÍÓÚ´ËÖµÎªÒì³££© |
-| `upper_bound` | float | ÉÏ½ç£¨¸ßÓÚ´ËÖµÎªÒì³££© |
-| `outlier_values` | list | Òì³£ÖµÈ¡ÖµÔ¤ÀÀ£¨×î¶à 10 ¸ö£© |
+### 1. å®‰è£…ä¾èµ–
 
----
+ç¡®ä¿å·²å®‰è£…æ‰€éœ€ä¾èµ–ï¼š
 
-## ¾Å¡¢×¢ÒâÊÂÏî
+```bash
+pip install crewai pandas numpy pydantic
+```
 
-1. **Êı¾İÁ¿ÒªÇó**£ºÃ¿¸ö×Ö¶ÎÖÁÉÙĞèÒª 4 ÌõÓĞĞ§Êı¾İ²ÅÄÜ½øĞĞÒì³£Öµ¼ì²â¡£
-2. **È±Ê§Öµ´¦Àí**£º¹¤¾ß×Ô¶¯ºöÂÔÈ±Ê§Öµ£¨NaN£©£¬²»»á½«ÆäÊÓÎªÒì³£Öµ¡£
-3. **·ÇÊıÖµ×Ö¶Î**£º¹¤¾ß»á×Ô¶¯Ìø¹ı·ÇÊıÖµ×Ö¶Î£¬²»»á±¨´í¡£
-4. **ãĞÖµÑ¡Ôñ½¨Òé**£º
-   - IQR ·½·¨£º`threshold=1.5` ÊÊÓÃÓÚ³£¹æ¼ì²â£¬`threshold=3` ÊÊÓÃÓÚÑÏ¸ñ¼ì²â¡£
-   - Z-Score ·½·¨£º`threshold=2` ½ÏÎª¿íËÉ£¬`threshold=3` ½ÏÎªÑÏ¸ñ¡£
-5. **ĞÔÄÜ¿¼ÂÇ**£º¶ÔÓÚ³¬´óÎÄ¼ş£¨°ÙÍò¼¶ÒÔÉÏ£©£¬½¨ÒéÏÈ½øĞĞÊı¾İ²ÉÑù¡£
-6. **Òì³£ÖµÔ¤ÀÀ**£º½öÕ¹Ê¾Ç° 10 ¸öÒì³£Öµ£¬ÍêÕûÁĞ±íĞè×ÔĞĞ´ÓÊı¾İÖĞÌáÈ¡¡£
+### 2. è¿è¡Œç‹¬ç«‹æµ‹è¯•
+
+```python
+# test_outlier_tool.py
+from generated.tools.outlier_detection_tool import OutlierDetectionTool
+
+tool = OutlierDetectionTool()
+result = tool._run(
+    file_path="data/raw/sample_customer_data.csv",
+    method="iqr",
+    threshold=1.5
+)
+print(result)
+```
+
+```bash
+python test_outlier_tool.py
+```
+
+### 3. åœ¨ Crew é¡¹ç›®ä¸­è¿è¡Œ
+
+æŒ‰ç…§ä¸Šæ–¹ Crew é›†æˆè¯´æ˜é…ç½®å¥½åï¼Œè¿è¡Œä¸» Crew è„šæœ¬å³å¯ã€‚
+
+## æ³¨æ„äº‹é¡¹
+
+1. **æ–‡ä»¶è·¯å¾„**ï¼šç¡®ä¿ CSV æ–‡ä»¶è·¯å¾„æ­£ç¡®ï¼Œå·¥å…·ä¼šæ£€æŸ¥æ–‡ä»¶æ˜¯å¦å­˜åœ¨ã€‚
+2. **æ•°å€¼ç±»å‹**ï¼šéæ•°å€¼ç±»å‹å­—æ®µä¼šè¢«è‡ªåŠ¨è·³è¿‡ï¼Œå·¥å…·ä¼šç»™å‡ºæç¤ºã€‚
+3. **ç¼ºå¤±å€¼å¤„ç†**ï¼šæ£€æµ‹æ—¶ä¼šè‡ªåŠ¨å¿½ç•¥ NaN å€¼ï¼Œä»…å¯¹æœ‰æ•ˆå€¼è¿›è¡Œæ£€æµ‹ã€‚
+4. **é˜ˆå€¼é€‰æ‹©**ï¼š
+   - IQR æ–¹æ³•ï¼š`threshold=1.5` æ£€æµ‹ä¸­åº¦å¼‚å¸¸ï¼Œ`threshold=3.0` æ£€æµ‹æåº¦å¼‚å¸¸
+   - Z-Score æ–¹æ³•ï¼š`threshold=2.0` è¾ƒæ•æ„Ÿï¼Œ`threshold=3.0` ä¸ºæ ‡å‡†å¸¸ç”¨å€¼
+5. **å¤§æ•°æ®é›†**ï¼šå¯¹äºè¶…å¤§æ–‡ä»¶ï¼Œå»ºè®®å…ˆè¿›è¡Œæ•°æ®æŠ½æ ·ï¼Œæˆ–åªæ£€æµ‹å…³é”®å­—æ®µã€‚
+6. **é¢„è§ˆæ•°æ®**ï¼šç»“æœä¸­åŒ…å«å‰ 10 ä¸ªå¼‚å¸¸å€¼çš„å…·ä½“æ•°å€¼å’Œç´¢å¼•ï¼Œä¾¿äºè¿½è¸ªå®šä½ã€‚

@@ -1,6 +1,7 @@
 data_understanding_agent:
   role: 数据理解专家
   goal: 读取并理解数据结构
+  backstory: 你擅长快速理解结构化数据，能从字段、样例和类型中判断数据分析方向。
 
 data_quality_agent:
   role: 数据质量检查专家

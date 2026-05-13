@@ -1,9 +1,9 @@
 | 控制层级    | 控制方式                                 | 作用               |
 | ------- | ------------------------------------ | ---------------- |
-| Agent 层 | `tools=[...]`                        | 决定 Agent 能调用哪些工具 |
-| Task 层  | `description` 中明确要求                  | 决定当前任务应该调用哪些工具   |
-| Skill 层 | `SKILL.md` 中写工具使用规则                  | 决定 Agent 如何选择工具  |
 | Crew 层  | `tasks=[...]` + `Process.sequential` | 决定工具调用发生在哪个流程阶段  |
+| Task 层  | `description` 中明确要求                  | 决定当前任务应该调用哪些 Agent   |
+| Agent 层 | `tools=[...]`                        | 决定 Agent 能调用哪些工具 |
+| Skill 层 | `SKILL.md` 中写工具使用规则                  | 决定 Agent 如何选择工具  |
 
 
 # 1. 工具不是随便给 Agent 用，而是按数据挖掘流程拆分

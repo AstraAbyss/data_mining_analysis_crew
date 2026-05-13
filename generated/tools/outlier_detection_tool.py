@@ -1,304 +1,257 @@
-"""
-Òì³£Öµ¼ì²â¹¤¾ß (Outlier Detection Tool)
-
-¹¦ÄÜÃèÊö£º
-    ¶ÁÈ¡ CSV ÎÄ¼ş£¬¶ÔÖ¸¶¨×Ö¶Î£¨»òËùÓĞÊıÖµ×Ö¶Î£©½øĞĞÒì³£Öµ¼ì²â¡£
-    Ö§³Ö IQR ºÍ Z-Score Á½ÖÖ¼ì²â·½·¨£¬·µ»ØÃ¿¸ö×Ö¶ÎµÄÒì³£ÖµÊıÁ¿¡¢±ÈÀı¼°ÉÏÏÂ½çĞÅÏ¢¡£
-
-ÒÀÀµ£º
-    - pandas
-    - numpy
-    - scipy (ÓÃÓÚ zscore ·½·¨)
-    - crewai.tools.BaseTool
-
-ÓÃ·¨Ê¾Àı£º
-    from generated.tools.outlier_detection_tool import OutlierDetectionTool
-
-    tool = OutlierDetectionTool()
-    result = tool.run(
-        file_path="data.csv",
-        columns=["age", "salary"],
-        method="iqr",
-        threshold=1.5
-    )
-"""
-
 import json
-import warnings
-from typing import Any, Optional, Union
+import os
+from typing import Optional, Type, List
 
 import numpy as np
 import pandas as pd
-from crewai.tools import BaseTool
 from pydantic import BaseModel, Field
+from crewai.tools import BaseTool
 
 
 class OutlierDetectionInput(BaseModel):
-    """OutlierDetectionTool µÄÊäÈë²ÎÊıÄ£ĞÍ"""
-
-    file_path: str = Field(
-        ..., description="CSV ÎÄ¼şÂ·¾¶£¬ÀıÈç './data/dataset.csv'"
-    )
-    columns: Optional[list] = Field(
-        None,
-        description="ĞèÒª¼ì²âÒì³£ÖµµÄ×Ö¶ÎÁĞ±í¡£Èç¹ûÎª None »ò¿ÕÁĞ±í£¬Ôò×Ô¶¯Ñ¡ÔñËùÓĞÊıÖµ×Ö¶Î¡£",
+    """å¼‚å¸¸å€¼æ£€æµ‹å·¥å…·çš„è¾“å…¥å‚æ•°æ¨¡å‹"""
+    file_path: str = Field(..., description="CSV æ–‡ä»¶è·¯å¾„")
+    columns: Optional[List[str]] = Field(
+        default=None,
+        description="éœ€è¦æ£€æµ‹å¼‚å¸¸å€¼çš„å­—æ®µåˆ—è¡¨ã€‚å¦‚æœä¸ºç©ºï¼Œåˆ™è‡ªåŠ¨é€‰æ‹©æ‰€æœ‰æ•°å€¼å­—æ®µã€‚"
     )
     method: str = Field(
         default="iqr",
-        description="Òì³£Öµ¼ì²â·½·¨¡£¿ÉÑ¡Öµ: 'iqr' (ËÄ·ÖÎ»¾à·¨) »ò 'zscore' (Z-Score ·¨)",
+        description="å¼‚å¸¸å€¼æ£€æµ‹æ–¹æ³•ï¼Œæ”¯æŒ iqrï¼ˆå››åˆ†ä½è·æ³•ï¼‰å’Œ zscoreï¼ˆZ åˆ†æ•°æ³•ï¼‰ã€‚"
     )
     threshold: float = Field(
         default=1.5,
-        description="Òì³£ÖµÅĞ¶¨ãĞÖµ¡£¶ÔÓÚ IQR ·½·¨£¬Ä¬ÈÏ 1.5£»¶ÔÓÚ Z-Score ·½·¨£¬½¨Òé 2~3¡£",
+        description="å¼‚å¸¸å€¼åˆ¤å®šé˜ˆå€¼ã€‚"
+        "å¯¹äº iqr æ–¹æ³•ï¼Œè¡¨ç¤º IQR çš„å€æ•°ï¼ˆé»˜è®¤ 1.5ï¼‰ï¼›"
+        "å¯¹äº zscore æ–¹æ³•ï¼Œè¡¨ç¤º Z åˆ†æ•°çš„ç»å¯¹å€¼ä¸Šé™ï¼ˆé»˜è®¤ 1.5ï¼Œå»ºè®®é€šå¸¸è®¾ä¸º 2 æˆ– 3ï¼‰ã€‚"
     )
 
 
 class OutlierDetectionTool(BaseTool):
     """
-    Òì³£Öµ¼ì²â¹¤¾ß
-
-    ¶ÁÈ¡ CSV ÎÄ¼ş²¢¶ÔÖ¸¶¨×Ö¶Î£¨»ò×Ô¶¯Ñ¡ÔñÊıÖµ×Ö¶Î£©Ö´ĞĞÒì³£Öµ¼ì²â¡£
-    Ö§³Ö IQR£¨ËÄ·ÖÎ»¾à·¨£©ºÍ Z-Score£¨±ê×¼·ÖÊı·¨£©Á½ÖÖÖ÷Á÷¼ì²â·½·¨¡£
-
-    Attributes:
-        name: ¹¤¾ßÃû³Æ
-        description: ¹¤¾ßÓÃÍ¾ÃèÊö
-        args_schema: ÊäÈë²ÎÊı Schema
+    å¼‚å¸¸å€¼æ£€æµ‹å·¥å…·ç±»ï¼Œç”¨äºåˆ†æ CSV æ–‡ä»¶ä¸­æ•°å€¼å­—æ®µçš„å¼‚å¸¸å€¼ã€‚
+    æ”¯æŒ IQRï¼ˆå››åˆ†ä½è·æ³•ï¼‰å’Œ Z-Scoreï¼ˆZ åˆ†æ•°æ³•ï¼‰ä¸¤ç§æ£€æµ‹æ–¹æ³•ã€‚
+    ç»§æ‰¿è‡ª BaseToolï¼Œæä¾›å¼‚å¸¸å€¼æ£€æµ‹ä¸åˆ†æçš„åŠŸèƒ½ã€‚
     """
-
-    name: str = "Òì³£Öµ¼ì²â¹¤¾ß"
+    name: str = "outlier_detection_tool"
     description: str = (
-        "¶ÁÈ¡ CSV ÎÄ¼ş²¢¶ÔÖ¸¶¨×Ö¶Î½øĞĞÒì³£Öµ¼ì²â¡£"
-        "Ö§³Ö IQR£¨ËÄ·ÖÎ»¾à·¨£¬threshold=1.5 ÎªÖĞ¶ÈÒì³££¬3 Îª¼«¶ÈÒì³££©"
-        "ºÍ Z-Score£¨±ê×¼·ÖÊı·¨£¬threshold=2 »ò 3 ³£ÓÃ£©¡£"
-        "·µ»Ø JSON ¸ñÊ½µÄ¼ì²â½á¹û£¬°üº¬Ã¿¸ö×Ö¶ÎµÄÒì³£ÖµÊıÁ¿¡¢±ÈÀı¼°ÉÏÏÂ½çĞÅÏ¢¡£"
+        "æ£€æµ‹ CSV æ–‡ä»¶ä¸­æ•°å€¼å­—æ®µçš„å¼‚å¸¸å€¼ã€‚"
+        "æ”¯æŒ iqrï¼ˆå››åˆ†ä½è·æ³•ï¼‰å’Œ zscoreï¼ˆZ åˆ†æ•°æ³•ï¼‰ä¸¤ç§æ–¹æ³•ã€‚"
+        "è¾“å‡ºæ¯ä¸ªå­—æ®µçš„å¼‚å¸¸å€¼æ•°é‡ã€å¼‚å¸¸å€¼æ¯”ä¾‹ã€ä¸Šä¸‹ç•Œç­‰ä¿¡æ¯ã€‚"
     )
-    args_schema: type[BaseModel] = OutlierDetectionInput
+    args_schema: Type[BaseModel] = OutlierDetectionInput
 
     def _run(
         self,
         file_path: str,
-        columns: Optional[list] = None,
+        columns: Optional[List[str]] = None,
         method: str = "iqr",
-        threshold: float = 1.5,
+        threshold: float = 1.5
     ) -> str:
         """
-        Ö´ĞĞÒì³£Öµ¼ì²âµÄºËĞÄ·½·¨¡£
+        æ‰§è¡Œå¼‚å¸¸å€¼æ£€æµ‹çš„æ ¸å¿ƒæ–¹æ³•
 
-        Args:
-            file_path: CSV ÎÄ¼şÂ·¾¶
-            columns: ´ı¼ì²â×Ö¶ÎÁĞ±í£¨¿ÉÑ¡£¬Îª¿ÕÔò×Ô¶¯Ñ¡ÔñÊıÖµ×Ö¶Î£©
-            method: ¼ì²â·½·¨£¬'iqr' »ò 'zscore'
-            threshold: Òì³£ÅĞ¶¨ãĞÖµ
+        å‚æ•°:
+            file_path (str): å¾…æ£€æµ‹çš„ CSV æ–‡ä»¶è·¯å¾„
+            columns (Optional[List[str]]): éœ€è¦æ£€æµ‹çš„å­—æ®µåˆ—è¡¨ï¼ŒNone æ—¶è‡ªåŠ¨é€‰æ‹©æ‰€æœ‰æ•°å€¼å­—æ®µ
+            method (str): æ£€æµ‹æ–¹æ³•ï¼Œå¯é€‰ "iqr" æˆ– "zscore"
+            threshold (float): å¼‚å¸¸å€¼åˆ¤å®šé˜ˆå€¼
 
-        Returns:
-            JSON ×Ö·û´®£¬°üº¬¼ì²â½á¹û
+        è¿”å›:
+            str: JSON æ ¼å¼çš„æ£€æµ‹ç»“æœï¼ŒåŒ…å«å¼‚å¸¸å€¼æ•°é‡ã€æ¯”ä¾‹ã€ä¸Šä¸‹ç•Œç­‰ä¿¡æ¯
         """
-        # 1. ²ÎÊıĞ£Ñé
-        method = method.lower().strip()
-        if method not in ("iqr", "zscore"):
-            raise ValueError(
-                f"²»Ö§³ÖµÄ¼ì²â·½·¨ '{method}'¡£ÇëÊ¹ÓÃ 'iqr' »ò 'zscore'¡£"
+        # 1. æ£€æŸ¥æ–‡ä»¶æ˜¯å¦å­˜åœ¨
+        if not os.path.exists(file_path):
+            return json.dumps(
+                {"error": f"æ–‡ä»¶ä¸å­˜åœ¨: {file_path}"},
+                ensure_ascii=False,
+                indent=2
             )
 
-        if threshold <= 0:
-            raise ValueError(f"ãĞÖµ±ØĞëÎªÕıÊı£¬µ±Ç°ÖµÎª {threshold}¡£")
+        # 2. æ ¡éªŒæ£€æµ‹æ–¹æ³•
+        valid_methods = ["iqr", "zscore"]
+        if method not in valid_methods:
+            return json.dumps(
+                {"error": f"ä¸æ”¯æŒçš„æ£€æµ‹æ–¹æ³•: {method}ï¼Œæ”¯æŒçš„æ–¹æ³•: {', '.join(valid_methods)}"},
+                ensure_ascii=False,
+                indent=2
+            )
 
-        # 2. ¶ÁÈ¡ CSV ÎÄ¼ş
+        # 3. è¯»å– CSV æ–‡ä»¶
         try:
             df = pd.read_csv(file_path)
-        except FileNotFoundError:
-            raise FileNotFoundError(f"ÕÒ²»µ½ÎÄ¼ş: {file_path}")
         except Exception as e:
-            raise RuntimeError(f"¶ÁÈ¡ CSV ÎÄ¼şÊ§°Ü: {e}")
-
-        if df.empty:
             return json.dumps(
-                {
-                    "status": "warning",
-                    "message": "CSV ÎÄ¼şÄÚÈİÎª¿Õ£¬ÎŞÊı¾İ¿É¼ì²â¡£",
-                    "results": {},
-                },
+                {"error": f"è¯»å– CSV æ–‡ä»¶å¤±è´¥: {str(e)}"},
                 ensure_ascii=False,
-                indent=2,
+                indent=2
             )
 
-        # 3. È·¶¨´ı¼ì²â×Ö¶Î
+        # 4. ç¡®å®šè¦æ£€æµ‹çš„å­—æ®µ
         if columns and len(columns) > 0:
-            # ÑéÖ¤ÓÃ»§Ö¸¶¨µÄ×Ö¶ÎÊÇ·ñ´æÔÚ
+            # æ£€æŸ¥æŒ‡å®šçš„å­—æ®µæ˜¯å¦åœ¨æ•°æ®é›†ä¸­
             missing_cols = [col for col in columns if col not in df.columns]
             if missing_cols:
-                warnings.warn(
-                    f"ÒÔÏÂ×Ö¶ÎÔÚÊı¾İ¼¯ÖĞ²»´æÔÚ£¬½«±»ºöÂÔ: {missing_cols}"
-                )
-            valid_columns = [
-                col
-                for col in columns
-                if col in df.columns and pd.api.types.is_numeric_dtype(df[col])
-            ]
-            if not valid_columns:
                 return json.dumps(
-                    {
-                        "status": "warning",
-                        "message": "Ö¸¶¨µÄ×Ö¶ÎÖĞÎŞÓĞĞ§µÄÊıÖµ×Ö¶Î¿É¹©¼ì²â¡£",
-                        "results": {},
-                    },
+                    {"error": f"æ•°æ®é›†ä¸­ä¸å­˜åœ¨ä»¥ä¸‹å­—æ®µ: {missing_cols}"},
                     ensure_ascii=False,
-                    indent=2,
+                    indent=2
                 )
+            # è¿‡æ»¤å‡ºæ•°å€¼å­—æ®µ
+            numeric_cols = [col for col in columns if pd.api.types.is_numeric_dtype(df[col])]
+            if not numeric_cols:
+                return json.dumps(
+                    {"error": "æŒ‡å®šçš„å­—æ®µä¸­ä¸åŒ…å«æ•°å€¼ç±»å‹å­—æ®µï¼Œæ— æ³•è¿›è¡Œå¼‚å¸¸å€¼æ£€æµ‹ã€‚"},
+                    ensure_ascii=False,
+                    indent=2
+                )
+            # å¦‚æœæœ‰éæ•°å€¼å­—æ®µè¢«æ’é™¤ï¼Œç»™å‡ºæç¤º
+            non_numeric = [col for col in columns if col not in numeric_cols]
+            if non_numeric:
+                print(f"è­¦å‘Š: ä»¥ä¸‹å­—æ®µä¸æ˜¯æ•°å€¼ç±»å‹ï¼Œå·²è·³è¿‡: {non_numeric}")
         else:
-            # ×Ô¶¯Ñ¡ÔñËùÓĞÊıÖµ×Ö¶Î
-            valid_columns = df.select_dtypes(include=[np.number]).columns.tolist()
-            if not valid_columns:
+            # è‡ªåŠ¨é€‰æ‹©æ‰€æœ‰æ•°å€¼å­—æ®µ
+            numeric_cols = df.select_dtypes(include=[np.number]).columns.tolist()
+            if not numeric_cols:
                 return json.dumps(
-                    {
-                        "status": "warning",
-                        "message": "Êı¾İ¼¯ÖĞ²»´æÔÚÊıÖµ×Ö¶Î£¬ÎŞ·¨Ö´ĞĞÒì³£Öµ¼ì²â¡£",
-                        "results": {},
-                    },
+                    {"error": "æ•°æ®é›†ä¸­æ²¡æœ‰æ•°å€¼ç±»å‹å­—æ®µï¼Œæ— æ³•è¿›è¡Œå¼‚å¸¸å€¼æ£€æµ‹ã€‚"},
                     ensure_ascii=False,
-                    indent=2,
+                    indent=2
                 )
 
-        # 4. Ö´ĞĞÒì³£Öµ¼ì²â
-        results = {}
-        for col in valid_columns:
-            series = df[col].dropna()
-            if len(series) < 4:
-                results[col] = {
-                    "error": f"×Ö¶Î '{col}' ÓĞĞ§Êı¾İ²»×ã£¨{len(series)} Ìõ£©£¬ÎŞ·¨½øĞĞÒì³£Öµ¼ì²â£¨ÖÁÉÙĞèÒª 4 Ìõ£©¡£",
+        # 5. æ‰§è¡Œå¼‚å¸¸å€¼æ£€æµ‹
+        result = {
+            "file": file_path,
+            "method": method,
+            "threshold": threshold,
+            "total_rows": len(df),
+            "columns_analyzed": len(numeric_cols),
+            "fields": {}
+        }
+
+        for col in numeric_cols:
+            col_data = df[col].dropna()  # å»é™¤ç¼ºå¤±å€¼åå†æ£€æµ‹
+            if len(col_data) == 0:
+                result["fields"][col] = {
+                    "error": "è¯¥å­—æ®µæ— æœ‰æ•ˆæ•°æ®ï¼ˆå…¨éƒ¨ä¸ºç©ºï¼‰"
                 }
                 continue
 
-            if method == "iqr":
-                result = self._detect_iqr(series, col, threshold)
-            else:
-                result = self._detect_zscore(series, col, threshold)
+            field_result = self._detect_outliers(col_data, method, threshold)
+            result["fields"][col] = field_result
 
-            results[col] = result
-
-        # 5. »ã×Ü²¢·µ»Ø
-        output = {
-            "status": "success",
-            "method": method,
-            "threshold": threshold,
-            "total_records": len(df),
-            "detected_fields": valid_columns,
-            "results": results,
+        # 6. æ±‡æ€»ç»Ÿè®¡
+        total_outliers = sum(
+            info.get("outlier_count", 0)
+            for info in result["fields"].values()
+            if "outlier_count" in info
+        )
+        total_values = sum(
+            info.get("total_values", 0)
+            for info in result["fields"].values()
+            if "total_values" in info
+        )
+        result["summary"] = {
+            "total_outliers": total_outliers,
+            "total_values_checked": total_values,
+            "overall_outlier_ratio": round(total_outliers / total_values, 4) if total_values > 0 else 0
         }
 
-        return json.dumps(output, ensure_ascii=False, indent=2)
+        return json.dumps(result, ensure_ascii=False, indent=2)
 
-    def _detect_iqr(
-        self, series: pd.Series, col_name: str, threshold: float
-    ) -> dict[str, Any]:
+    def _detect_outliers(
+        self,
+        data: pd.Series,
+        method: str,
+        threshold: float
+    ) -> dict:
         """
-        Ê¹ÓÃ IQR£¨ËÄ·ÖÎ»¾à£©·¨¼ì²âÒì³£Öµ¡£
+        å¯¹å•ä¸ªå­—æ®µæ‰§è¡Œå¼‚å¸¸å€¼æ£€æµ‹
 
-        IQR = Q3 - Q1
-        Òì³£ÖµÅĞ¶¨£ºÖµ < Q1 - threshold * IQR »òÖµ > Q3 + threshold * IQR
+        å‚æ•°:
+            data (pd.Series): å¾…æ£€æµ‹çš„æ•°æ®åºåˆ—
+            method (str): æ£€æµ‹æ–¹æ³•
+            threshold (float): é˜ˆå€¼
 
-        Args:
-            series: ÊıÖµĞòÁĞ
-            col_name: ×Ö¶ÎÃû
-            threshold: IQR ±¶ÊıãĞÖµ
-
-        Returns:
-            ¼ì²â½á¹û×Öµä
+        è¿”å›:
+            dict: è¯¥å­—æ®µçš„å¼‚å¸¸å€¼æ£€æµ‹ç»“æœ
         """
-        q1 = series.quantile(0.25)
-        q3 = series.quantile(0.75)
-        iqr = q3 - q1
-
-        lower_bound = q1 - threshold * iqr
-        upper_bound = q3 + threshold * iqr
-
-        outliers = series[(series < lower_bound) | (series > upper_bound)]
-        outlier_count = len(outliers)
-        total_count = len(series)
-        outlier_ratio = round(outlier_count / total_count, 4) if total_count > 0 else 0.0
-
-        return {
-            "field": col_name,
-            "method": "iqr",
-            "threshold": threshold,
-            "total_count": total_count,
-            "outlier_count": outlier_count,
-            "outlier_ratio": outlier_ratio,
-            "outlier_ratio_percent": f"{outlier_ratio * 100:.2f}%",
-            "q1": round(float(q1), 4),
-            "q3": round(float(q3), 4),
-            "iqr": round(float(iqr), 4),
-            "lower_bound": round(float(lower_bound), 4),
-            "upper_bound": round(float(upper_bound), 4),
-            "outlier_values": (
-                outliers.head(10).tolist()
-                if outlier_count > 0
-                else []
-            ),
-            "outlier_preview_count": min(outlier_count, 10),
+        total = len(data)
+        stats = {
+            "mean": round(float(data.mean()), 4),
+            "std": round(float(data.std()), 4),
+            "min": round(float(data.min()), 4),
+            "max": round(float(data.max()), 4),
+            "median": round(float(data.median()), 4),
+            "total_values": total
         }
 
-    def _detect_zscore(
-        self, series: pd.Series, col_name: str, threshold: float
-    ) -> dict[str, Any]:
-        """
-        Ê¹ÓÃ Z-Score£¨±ê×¼·ÖÊı£©·¨¼ì²âÒì³£Öµ¡£
+        if method == "iqr":
+            Q1 = data.quantile(0.25)
+            Q3 = data.quantile(0.75)
+            IQR = Q3 - Q1
+            lower_bound = Q1 - threshold * IQR
+            upper_bound = Q3 + threshold * IQR
 
-        Z-Score = (x - mean) / std
-        Òì³£ÖµÅĞ¶¨£º|Z-Score| > threshold
+            outliers = data[(data < lower_bound) | (data > upper_bound)]
+            outlier_count = len(outliers)
 
-        Args:
-            series: ÊıÖµĞòÁĞ
-            col_name: ×Ö¶ÎÃû
-            threshold: Z-Score ãĞÖµ
+            stats.update({
+                "Q1": round(float(Q1), 4),
+                "Q3": round(float(Q3), 4),
+                "IQR": round(float(IQR), 4),
+                "lower_bound": round(float(lower_bound), 4),
+                "upper_bound": round(float(upper_bound), 4),
+                "outlier_count": outlier_count,
+                "outlier_ratio": round(outlier_count / total, 4),
+                "method_description": (
+                    f"ä½¿ç”¨ IQR æ–¹æ³•ï¼Œé˜ˆå€¼={threshold}ï¼Œ"
+                    f"ä¸‹ç•Œ = Q1 - {threshold} * IQR = {round(float(lower_bound), 4)}ï¼Œ"
+                    f"ä¸Šç•Œ = Q3 + {threshold} * IQR = {round(float(upper_bound), 4})"
+                )
+            })
 
-        Returns:
-            ¼ì²â½á¹û×Öµä
-        """
-        mean = series.mean()
-        std = series.std(ddof=0)
+            if outlier_count > 0:
+                stats["outlier_values_preview"] = [
+                    round(float(v), 4) for v in outliers.head(10).tolist()
+                ]
+                stats["outlier_indices_preview"] = outliers.index[:10].tolist()
 
-        if std == 0:
-            return {
-                "field": col_name,
-                "method": "zscore",
-                "threshold": threshold,
-                "total_count": len(series),
-                "outlier_count": 0,
-                "outlier_ratio": 0.0,
-                "outlier_ratio_percent": "0.00%",
-                "mean": round(float(mean), 4),
-                "std": round(float(std), 4),
-                "lower_bound": round(float(mean), 4),
-                "upper_bound": round(float(mean), 4),
-                "warning": "±ê×¼²îÎª 0£¬ËùÓĞÖµÏàÍ¬£¬ÎŞÒì³£Öµ¡£",
-                "outlier_values": [],
-                "outlier_preview_count": 0,
-            }
+        elif method == "zscore":
+            mean_val = data.mean()
+            std_val = data.std()
 
-        z_scores = np.abs((series - mean) / std)
-        outliers = series[z_scores > threshold]
-        outlier_count = len(outliers)
-        total_count = len(series)
-        outlier_ratio = round(outlier_count / total_count, 4) if total_count > 0 else 0.0
+            if std_val == 0:
+                stats.update({
+                    "outlier_count": 0,
+                    "outlier_ratio": 0.0,
+                    "lower_bound": round(float(mean_val), 4),
+                    "upper_bound": round(float(mean_val), 4),
+                    "method_description": "è¯¥å­—æ®µæ ‡å‡†å·®ä¸º 0ï¼ˆå¸¸é‡å­—æ®µï¼‰ï¼Œæ— å¼‚å¸¸å€¼ã€‚"
+                })
+                return stats
 
-        return {
-            "field": col_name,
-            "method": "zscore",
-            "threshold": threshold,
-            "total_count": total_count,
-            "outlier_count": outlier_count,
-            "outlier_ratio": outlier_ratio,
-            "outlier_ratio_percent": f"{outlier_ratio * 100:.2f}%",
-            "mean": round(float(mean), 4),
-            "std": round(float(std), 4),
-            "lower_bound": round(float(mean - threshold * std), 4),
-            "upper_bound": round(float(mean + threshold * std), 4),
-            "outlier_values": (
-                outliers.head(10).tolist()
-                if outlier_count > 0
-                else []
-            ),
-            "outlier_preview_count": min(outlier_count, 10),
-        }
+            z_scores = (data - mean_val) / std_val
+            outliers = data[z_scores.abs() > threshold]
+            outlier_count = len(outliers)
+
+            stats.update({
+                "lower_bound": round(float(mean_val - threshold * std_val), 4),
+                "upper_bound": round(float(mean_val + threshold * std_val), 4),
+                "outlier_count": outlier_count,
+                "outlier_ratio": round(outlier_count / total, 4),
+                "method_description": (
+                    f"ä½¿ç”¨ Z-Score æ–¹æ³•ï¼Œé˜ˆå€¼={threshold}ï¼Œ"
+                    f"|Z| > {threshold} åˆ¤å®šä¸ºå¼‚å¸¸å€¼ï¼Œ"
+                    f"ä¸‹ç•Œ = mean - {threshold} * std = {round(float(mean_val - threshold * std_val), 4)}ï¼Œ"
+                    f"ä¸Šç•Œ = mean + {threshold} * std = {round(float(mean_val + threshold * std_val), 4})"
+                )
+            })
+
+            if outlier_count > 0:
+                stats["outlier_values_preview"] = [
+                    round(float(v), 4) for v in outliers.head(10).tolist()
+                ]
+                stats["outlier_indices_preview"] = outliers.index[:10].tolist()
+
+        return stats
